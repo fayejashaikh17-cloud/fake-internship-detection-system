@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="fakeInternshipApp">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fake Internship Detection System</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.3/angular.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.3/angular-route.min.js"></script>
+  <script src="app.js"></script>
+</head>
+<body ng-controller="MainController as main">
+  <div class="app-wrapper">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-content">
+        <div class="logo-section">
+          <i class="fas fa-shield-alt"></i>
+          <h1>Fake Internship Detection System</h1>
+        </div>
+        <div class="user-section" ng-if="main.isAuthenticated">
+          <span class="user-badge">
+            <i class="fas fa-user"></i>
+            {{ main.currentUser.name }} ({{ main.currentUser.role | uppercase }})
+          </span>
+          <button class="btn-logout" ng-click="main.logout()">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Auth Section (shown when not logged in) -->
+      <section class="auth-section" ng-if="!main.isAuthenticated">
+        <div class="auth-container">
+          <div class="auth-card">
+            <div class="auth-header">
+              <h2>
+                <i class="fas fa-lock"></i>
+                Login / Register
+              </h2>
+              <p class="auth-subtitle">Choose your role to access the system</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="auth-tabs">
+              <button 
+                class="tab-btn" 
+                ng-class="{ active: main.authMode === 'login' }"
+                ng-click="main.authMode = 'login'">
+                <i class="fas fa-sign-in-alt"></i> Login
+              </button>
+              <button 
+                class="tab-btn" 
+                ng-class="{ active: main.authMode === 'register' }"
+                ng-click="main.authMode = 'register'">
+                <i class="fas fa-user-plus"></i> Register
+              </button>
+            </div>
+
+            <!-- Login Form -->
+            <form ng-if="main.authMode === 'login'" ng-submit="main.login()" class="auth-form">
+              <div class="form-group">
+                <label><i class="fas fa-envelope"></i> Email</label>
+                <input type="email" ng-model="main.loginData.email" required placeholder="Enter your email">
+              </div>
+              <div class="form-group">
+                <label><i class="fas fa-key"></i> Password</label>
+                <input type="password" ng-model="main.loginData.password" required placeholder="Enter your password">
+              </div>
+              <div class="form-group">
+                <label><i class="fas fa-user-tag"></i> Role</label>
+                <select ng-model="main.loginData.role" required>
+                  <option value="student">Student</option>
+                  <option value="faculty">Faculty</option>
+                </select>
+              </div>
+              <button type="submit" class="btn-primary" ng-disabled="main.loading">
+                <i class="fas fa-sign-in-alt"></i> 
+                <span ng-if="!main.loading">Login</span>
+                <span ng-if="main.loading">Logging in...</span>
+              </button>
+              <div class="alert alert-danger" ng-if="main.errorMessage">
+                <i class="fas fa-exclamation-circle"></i> {{ main.errorMessage }}
+              </div>
+            </form>
+
+            <!-- Register Form -->
+            <form ng-if="main.authMode === 'register'" ng-submit="main.register()" class="auth-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label><i class="fas fa-user"></i> Full Name</label>
+                  <input type="text" ng-model="main.registerData.name" required placeholder="Enter your name">
+                </div>
+                <div class="form-group">
+                  <label><i class="fas fa-envelope"></i> Email</label>
+                  <input type="email" ng-model="main.registerData.email" required placeholder="Enter your email">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label><i class="fas fa-key"></i> Password</label>
+                  <input type="password" ng-model="main.registerData.password" required placeholder="Create a password">
+                </div>
+                <div class="form-group">
+                  <label><i class="fas fa-user-tag"></i> Role</label>
+                  <select ng-model="main.registerData.role" required>
+                    <option value="student">Student</option>
+                    <option value="faculty">Faculty</option>
+                  </select>
+                </div>
+              </div>
+              <button type="submit" class="btn-primary" ng-disabled="main.loading">
+                <i class="fas fa-user-plus"></i> 
+                <span ng-if="!main.loading">Register</span>
+                <span ng-if="main.loading">Registering...</span>
+              </button>
+              <div class="alert alert-danger" ng-if="main.errorMessage">
+                <i class="fas fa-exclamation-circle"></i> {{ main.errorMessage }}
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dashboard (shown when logged in) -->
+      <section class="dashboard-section" ng-if="main.isAuthenticated">
+        <div class="dashboard-grid">
+          <!-- Internship Form Card -->
+          <div class="card form-card">
+            <div class="card-header">
+              <h2><i class="fas fa-search"></i> Analyze Internship</h2>
+              <p class="card-subtitle">Enter internship details to detect potential scams</p>
+            </div>
+            <form ng-submit="main.analyzeInternship()" class="internship-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label><i class="fas fa-building"></i> Company Name *</label>
+                  <input type="text" ng-model="main.internshipData.companyName" required placeholder="e.g. ABC Technologies">
+                </div>
+                <div class="form-group">
+                  <label><i class="fas fa-briefcase"></i> Position / Role *</label>
+                  <input type="text" ng-model="main.internshipData.position" required placeholder="e.g. Web Developer Intern">
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label><i class="fas fa-globe"></i> Company Website</label>
+                  <input type="url" ng-model="main.internshipData.website" placeholder="https://example.com">
+                </div>
+                <div class="form-group">
+                  <label><i class="fas fa-envelope"></i> Contact Email</label>
+                  <input type="email" ng-model="main.internshipData.contactEmail" placeholder="hr@example.com">
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label><i class="fas fa-money-bill-wave"></i> Stipend Type</label>
+                  <select ng-model="main.internshipData.stipendType">
+                    <option value="unknown">Not mentioned / Unknown</option>
+                    <option value="paid">Paid</option>
+                    <option value="unpaid">Unpaid</option>
+                  </select>
+                </div>
+                <div class="form-group checkbox-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" ng-model="main.internshipData.requiresUpfrontPayment">
+                    <span><i class="fas fa-exclamation-triangle"></i> Asks for registration / training fee</span>
+                  </label>
+                </div>
+                <div class="form-group checkbox-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" ng-model="main.internshipData.requiresSensitiveDocs">
+                    <span><i class="fas fa-file-alt"></i> Asks for sensitive documents early</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label><i class="fas fa-link"></i> Where did you find this internship?</label>
+                <input type="text" ng-model="main.internshipData.source" placeholder="e.g. LinkedIn, Internshala, WhatsApp group, etc.">
+              </div>
+
+              <div class="form-group">
+                <label><i class="fas fa-file-alt"></i> Job Description / Full Text</label>
+                <textarea ng-model="main.internshipData.jobDescription" rows="5" placeholder="Paste the complete internship description here..."></textarea>
+              </div>
+
+              <button type="submit" class="btn-primary btn-analyze" ng-disabled="main.analyzing">
+                <i class="fas fa-shield-alt"></i>
+                <span ng-if="!main.analyzing">Analyze Internship</span>
+                <span ng-if="main.analyzing">Analyzing...</span>
+              </button>
+              <p class="form-note">
+                <i class="fas fa-info-circle"></i> 
+                * Required fields. This is a rule-based helper tool, not a final legal decision.
+              </p>
+            </form>
+          </div>
+
+          <!-- Result Card -->
+          <div class="card result-card">
+            <div class="card-header">
+              <h2><i class="fas fa-chart-line"></i> Risk Analysis</h2>
+            </div>
+            <div class="result-container" ng-if="main.analysisResult">
+              <div class="risk-badge" ng-class="'risk-' + main.analysisResult.riskLevel.toLowerCase()">
+                <div class="badge-content">
+                  <span class="badge-level">{{ main.analysisResult.riskLevel.toUpperCase() }} RISK</span>
+                  <span class="badge-score">{{ main.analysisResult.riskScore }}/100</span>
+                </div>
+              </div>
+              <div class="result-title">
+                <h3>{{ main.analysisResult.companyName }}</h3>
+                <p>{{ main.analysisResult.position }}</p>
+              </div>
+              <div class="risk-details">
+                <h4><i class="fas fa-list-ul"></i> Why this rating?</h4>
+                <ul class="risk-reasons" ng-if="main.analysisResult.riskReasons.length > 0">
+                  <li ng-repeat="reason in main.analysisResult.riskReasons">
+                    <i class="fas fa-exclamation-circle"></i> {{ reason }}
+                  </li>
+                </ul>
+                <p ng-if="main.analysisResult.riskReasons.length === 0" class="no-risks">
+                  <i class="fas fa-check-circle"></i> No strong risk signals detected based on the current rules.
+                </p>
+              </div>
+              <div class="result-footer">
+                <p class="info-text">
+                  <i class="fas fa-lightbulb"></i> 
+                  This is an educational, rule-based estimation. Always cross-check company details, talk to seniors, and use official platforms.
+                </p>
+              </div>
+            </div>
+            <div class="result-placeholder" ng-if="!main.analysisResult">
+              <i class="fas fa-clipboard-list"></i>
+              <p>Fill the form and click "Analyze Internship" to see the risk assessment.</p>
+            </div>
+          </div>
+
+          <!-- History Card (Faculty Only) -->
+          <div class="card history-card" ng-if="main.currentUser.role === 'faculty'">
+            <div class="card-header">
+              <h2><i class="fas fa-history"></i> Recent Evaluations</h2>
+              <button class="btn-refresh" ng-click="main.loadHistory()" title="Refresh">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </div>
+            <div class="history-container">
+              <div ng-if="main.historyLoading" class="loading-state">
+                <i class="fas fa-spinner fa-spin"></i> Loading...
+              </div>
+              <div ng-if="!main.historyLoading && main.history.length === 0" class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <p>No evaluations yet.</p>
+              </div>
+              <div class="history-list" ng-if="!main.historyLoading && main.history.length > 0">
+                <div class="history-item" ng-repeat="item in main.history">
+                  <div class="history-header">
+                    <div class="history-title">
+                      <h4>{{ item.companyName }}</h4>
+                      <p>{{ item.position }}</p>
+                    </div>
+                    <div class="history-badge" ng-class="'risk-' + item.riskLevel.toLowerCase()">
+                      {{ item.riskLevel }} ({{ item.riskScore }}/100)
+                    </div>
+                  </div>
+                  <div class="history-meta">
+                    <span><i class="fas fa-calendar"></i> {{ item.createdAt | date:'medium' }}</span>
+                    <span ng-if="item.createdBy"><i class="fas fa-user"></i> {{ item.createdBy.name }} ({{ item.createdBy.role }})</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Student Message -->
+          <div class="card info-card" ng-if="main.currentUser.role === 'student'">
+            <div class="card-header">
+              <h2><i class="fas fa-info-circle"></i> Information</h2>
+            </div>
+            <div class="info-content">
+              <i class="fas fa-lock"></i>
+              <p>Only faculty members can view the full history of all evaluations.</p>
+              <p class="info-sub">Your evaluations are saved securely and can be reviewed by faculty.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>
+        <i class="fas fa-copyright"></i> 
+        {{ main.currentYear }} Fake Internship Detection System. For academic/educational use.
+      </p>
+    </footer>
+  </div>
+</body>
+</html>
