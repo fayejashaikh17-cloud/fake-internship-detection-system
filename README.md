@@ -15,6 +15,10 @@ This project is a web-based system that helps users identify fake internship pos
 
 ## 📸 Output
 
+![Screenshot 1](screenshot1.png)
+
+![Screenshot 2](screenshot2.png)
+
 ## ▶️ How to Run
 1. Install dependencies  
    npm install  
